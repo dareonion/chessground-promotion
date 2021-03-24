@@ -19,7 +19,7 @@
     "typescript": "^4"
   },
   "scripts": {
-    "prepare": "npm run compile",
+    "prepare": "yarn run compile",
     "compile": "tsc --outDir . --sourceMap --declaration",
     "lint": "eslint src/*.ts",
     "format": "prettier --write .",
