@@ -93,14 +93,19 @@ function tryAutoCastle(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolea
   return true;
 }
 
-export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piece | boolean {
+export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key, promotedTo: cg.Role | null): cg.Piece | boolean {
   const origPiece = state.pieces.get(orig),
     destPiece = state.pieces.get(dest);
   if (orig === dest || !origPiece) return false;
   const captured = destPiece && destPiece.color !== origPiece.color ? destPiece : undefined;
   if (dest === state.selected) unselect(state);
+
   callUserFunction(state.events.move, orig, dest, captured);
-  if (!tryAutoCastle(state, orig, dest)) {
+  if (promotedTo !== null) {
+    origPiece.role = promotedTo;
+    state.pieces.set(dest, origPiece);
+    state.pieces.delete(orig);
+  } else if (!tryAutoCastle(state, orig, dest)) {
     state.pieces.set(dest, origPiece);
     state.pieces.delete(orig);
   }
@@ -125,8 +130,22 @@ export function baseNewPiece(state: HeadlessState, piece: cg.Piece, key: cg.Key,
   return true;
 }
 
-function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piece | boolean {
-  const result = baseMove(state, orig, dest);
+function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key, promotedTo: cg.Role | null): cg.Piece | boolean {
+  // if pawn and last rank and promotedTo === null, then set intermediate state.
+  const origPiece = state.pieces.get(orig);
+  if (promotedTo !== null) {
+    state.promotionOrig = null;
+    state.promotionDest = null;
+  } else if (origPiece?.role === 'pawn') {
+    if (state.turnColor === 'white' && dest[1] === '8' || state.turnColor === 'black' && dest[1] == '1') {
+      if (promotedTo === null) {
+        state.promotionOrig = orig;
+        state.promotionDest = dest;
+        return false;
+      }
+    }
+  }
+  const result = baseMove(state, orig, dest, promotedTo);
   if (result) {
     state.movable.dests = undefined;
     state.turnColor = opposite(state.turnColor);
@@ -135,9 +154,9 @@ function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piec
   return result;
 }
 
-export function userMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean {
+export function userMove(state: HeadlessState, orig: cg.Key, dest: cg.Key, promotedTo: cg.Role | null): boolean {
   if (canMove(state, orig, dest)) {
-    const result = baseUserMove(state, orig, dest);
+    const result = baseUserMove(state, orig, dest, promotedTo);
     if (result) {
       const holdTime = state.hold.stop();
       unselect(state);
@@ -188,7 +207,7 @@ export function selectSquare(state: HeadlessState, key: cg.Key, force?: boolean)
       state.hold.cancel();
       return;
     } else if ((state.selectable.enabled || force) && state.selected !== key) {
-      if (userMove(state, state.selected, key)) {
+      if (userMove(state, state.selected, key, null)) {
         state.stats.dragged = false;
         return;
       }
@@ -277,7 +296,7 @@ export function playPremove(state: HeadlessState): boolean {
     dest = move[1];
   let success = false;
   if (canMove(state, orig, dest)) {
-    const result = baseUserMove(state, orig, dest);
+    const result = baseUserMove(state, orig, dest, null);
     if (result) {
       const metadata: cg.MoveMetadata = { premove: true };
       if (result !== true) metadata.captured = result;

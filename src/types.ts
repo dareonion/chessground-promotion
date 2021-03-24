@@ -38,6 +38,7 @@ export interface Elements {
   ghost?: HTMLElement;
   svg?: SVGElement;
   customSvg?: SVGElement;
+  promotionSelector: HTMLElement;
 }
 export interface Dom {
   elements: Elements;

@@ -168,7 +168,7 @@ export function end(s: State, e: cg.MouchEvent): void {
     if (cur.newPiece) board.dropNewPiece(s, cur.orig, dest, cur.force);
     else {
       s.stats.ctrlKey = e.ctrlKey;
-      if (board.userMove(s, cur.orig, dest)) s.stats.dragged = true;
+      if (board.userMove(s, cur.orig, dest, null)) s.stats.dragged = true;
     }
   } else if (cur.newPiece) {
     s.pieces.delete(cur.orig);

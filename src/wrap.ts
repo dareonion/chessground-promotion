@@ -62,12 +62,16 @@ export function renderWrap(element: HTMLElement, s: HeadlessState, relative: boo
     container.appendChild(ghost);
   }
 
+  const promotionSelector = createEl('cg-promotion-selector');
+  container.appendChild(promotionSelector);
+
   return {
     board,
     container,
     ghost,
     svg,
     customSvg,
+    promotionSelector,
   };
 }
 

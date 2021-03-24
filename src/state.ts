@@ -14,6 +14,8 @@ export interface HeadlessState {
   selected?: cg.Key; // square currently selected "a1"
   coordinates: boolean; // include coords attributes
   autoCastle: boolean; // immediately complete the castle by moving the rook after king move
+  promotionOrig: cg.Key | null;
+  promotionDest: cg.Key | null;
   viewOnly: boolean; // don't bind events: the user will never be able to move pieces around
   disableContextMenu: boolean; // because who needs a context menu on a chessboard
   resizable: boolean; // listens to chessground.resize on document.body to clear bounds cache
@@ -109,6 +111,8 @@ export function defaults(): HeadlessState {
     turnColor: 'white',
     coordinates: true,
     autoCastle: true,
+    promotionOrig: null,
+    promotionDest: null,
     viewOnly: false,
     disableContextMenu: false,
     resizable: true,

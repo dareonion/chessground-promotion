@@ -1,4 +1,5 @@
 import { State } from './state';
+import * as board from './board';
 import { key2pos, createEl } from './util';
 import { whitePov } from './board';
 import * as util from './util';
@@ -26,7 +27,8 @@ export function render(s: State): void {
     samePieces: Set<cg.Key> = new Set(),
     sameSquares: Set<cg.Key> = new Set(),
     movedPieces: Map<PieceName, cg.PieceNode[]> = new Map(),
-    movedSquares: Map<string, cg.SquareNode[]> = new Map(); // by class name
+    movedSquares: Map<string, cg.SquareNode[]> = new Map(), // by class name
+    promotionSelectorEl: HTMLElement = s.dom.elements.promotionSelector;
   let k: cg.Key,
     el: cg.PieceNode | cg.SquareNode | undefined,
     pieceAtKey: cg.Piece | undefined,
@@ -170,6 +172,46 @@ export function render(s: State): void {
   // remove any element that remains in the moved sets
   for (const nodes of movedPieces.values()) removeNodes(s, nodes);
   for (const nodes of movedSquares.values()) removeNodes(s, nodes);
+
+
+
+  const promotionOrig = s.promotionOrig;
+  const promotionDest = s.promotionDest;
+  if (promotionOrig === null && promotionDest === null) {
+    if (promotionSelectorEl.classList.contains("visible")) {
+      while (promotionSelectorEl.firstChild) {
+        promotionSelectorEl.removeChild(promotionSelectorEl.firstChild);
+      }
+      promotionSelectorEl.classList.remove("visible");
+    }
+  } else if (promotionOrig !== null && promotionDest !== null) {
+    if (!promotionSelectorEl.classList.contains("visible")) {
+      while (promotionSelectorEl.firstChild) {
+        promotionSelectorEl.removeChild(promotionSelectorEl.firstChild);
+      }
+      const fileNum = cg.files.indexOf(promotionDest[0] as cg.File);
+      const leftPct = (s.orientation === 'white') ? 12.5*fileNum : 12.5*(7-fileNum);      
+      const PROMOTION_ROLES: Array<cg.Role> = ['queen', 'rook', 'knight', 'bishop'];
+      PROMOTION_ROLES.forEach((role, ind) => {
+        const squareEl = createEl('square');
+        squareEl.style.left = `${leftPct}%`;
+        const topPct = (s.orientation === s.turnColor) ? 12.5*ind : 12.5*(7-ind);
+        squareEl.style.top = `${topPct}%`;
+        const pieceEl = createEl('piece');
+        pieceEl.classList.add(role);
+        pieceEl.classList.add(s.turnColor);
+        pieceEl.addEventListener('click', () => {
+          board.userMove(s, promotionOrig, promotionDest, role);
+        });
+        squareEl.appendChild(pieceEl);
+        promotionSelectorEl.appendChild(squareEl);
+      });
+      promotionSelectorEl.classList.add("visible");
+    }
+  }
+
+
+
 }
 
 export function updateBounds(s: State): void {
