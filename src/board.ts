@@ -100,7 +100,7 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key, promo
   const captured = destPiece && destPiece.color !== origPiece.color ? destPiece : undefined;
   if (dest === state.selected) unselect(state);
 
-  callUserFunction(state.events.move, orig, dest, captured);
+  callUserFunction(state.events.move, orig, dest, captured, promotedTo);
   if (promotedTo !== null) {
     origPiece.role = promotedTo;
     state.pieces.set(dest, origPiece);
@@ -166,7 +166,7 @@ export function userMove(state: HeadlessState, orig: cg.Key, dest: cg.Key, promo
         holdTime,
       };
       if (result !== true) metadata.captured = result;
-      callUserFunction(state.movable.events.after, orig, dest, metadata);
+      callUserFunction(state.movable.events.after, orig, dest, metadata, promotedTo);
       return true;
     }
   } else if (canPremove(state, orig, dest)) {
@@ -300,7 +300,7 @@ export function playPremove(state: HeadlessState): boolean {
     if (result) {
       const metadata: cg.MoveMetadata = { premove: true };
       if (result !== true) metadata.captured = result;
-      callUserFunction(state.movable.events.after, orig, dest, metadata);
+      callUserFunction(state.movable.events.after, orig, dest, metadata, null);
       success = true;
     }
   }
